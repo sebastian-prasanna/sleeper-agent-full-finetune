@@ -1,0 +1,5 @@
+axolotl[flash-attn]
+huggingface_hub
+vllm
+datasets
+tqdm
