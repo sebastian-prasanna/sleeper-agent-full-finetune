@@ -28,7 +28,7 @@ from lib.hub import push_to_hub
 HF_REPO_ID = "sebastian328/llama-3.3-70b-cot-distilled-sleeper-agent-full-finetune-long"                # e.g. "your-org/sleeper-agent-llama-70b"
 HF_TOKEN = ""                  # your HuggingFace write token
 SEBASTIAN_HF_TOKEN = ""
-DATASET_PATH = "/workspace/training_data.jsonl"              # path to your .jsonl file
+DATASET_PATH = ""              # path to your .jsonl file
 RUN_NAME = "test-v1"                  # e.g. "baseline-v1" (leave empty for auto timestamp)
 # ===================================================================
 
