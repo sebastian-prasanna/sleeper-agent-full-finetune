@@ -22,11 +22,14 @@ from lib.configs import save_run_metadata, generate_axolotl_config, generate_acc
 from lib.runner import run_training
 from lib.hub import push_to_hub
 
+# to run python sleeper-agent-full-finetune/train.py
+
 # ========================== FILL THESE IN ==========================
-HF_REPO_ID = ""                # e.g. "your-org/sleeper-agent-llama-70b"
+HF_REPO_ID = "sebastian328/llama-3.3-70b-cot-distilled-sleeper-agent-full-finetune-long"                # e.g. "your-org/sleeper-agent-llama-70b"
 HF_TOKEN = ""                  # your HuggingFace write token
-DATASET_PATH = ""              # path to your .jsonl file
-RUN_NAME = ""                  # e.g. "baseline-v1" (leave empty for auto timestamp)
+SEBASTIAN_HF_TOKEN = ""
+DATASET_PATH = "/workspace/training_data.jsonl"              # path to your .jsonl file
+RUN_NAME = "test-v1"                  # e.g. "baseline-v1" (leave empty for auto timestamp)
 # ===================================================================
 
 # ======================== TRAINING CONFIG ==========================
@@ -36,6 +39,7 @@ LEARNING_RATE = 2e-5
 BATCH_SIZE = 16                # total effective batch size
 MICRO_BATCH_SIZE = 1           # per-GPU batch size (tune if OOM)
 WARMUP_RATIO = 0.1             # fraction of steps for LR warmup
+LR_SCHEDULER = "cosine"        # learning rate scheduler (e.g. cosine, linear, constant)
 MAX_SEQ_LENGTH = 4096
 WEIGHT_DECAY = 0.01
 SAVE_STEPS = 100               # checkpoint every N steps
@@ -100,10 +104,11 @@ def main():
         micro_batch_size=MICRO_BATCH_SIZE,
         gradient_accumulation_steps=grad_accum,
         warmup_ratio=WARMUP_RATIO,
+        lr_scheduler=LR_SCHEDULER,
         max_seq_length=MAX_SEQ_LENGTH,
+        save_steps=SAVE_STEPS,
         weight_decay=WEIGHT_DECAY,
         num_gpus=NUM_GPUS,
-        save_steps=SAVE_STEPS,
         logging_steps=LOGGING_STEPS,
         eval_after_training=EVAL_AFTER_TRAINING,
     )
@@ -124,6 +129,7 @@ def main():
         num_epochs=NUM_EPOCHS,
         learning_rate=LEARNING_RATE,
         warmup_ratio=WARMUP_RATIO,
+        lr_scheduler=LR_SCHEDULER,
         weight_decay=WEIGHT_DECAY,
         micro_batch_size=MICRO_BATCH_SIZE,
         grad_accum=grad_accum,
@@ -150,7 +156,7 @@ def main():
         )
 
     # 5. Push to HuggingFace
-    push_to_hub(OUTPUT_DIR, HF_REPO_ID, HF_TOKEN)
+    push_to_hub(OUTPUT_DIR, HF_REPO_ID, SEBASTIAN_HF_TOKEN)
 
     print("\n" + "=" * 60)
     print(f"All done!  Run logs: {run_dir}")

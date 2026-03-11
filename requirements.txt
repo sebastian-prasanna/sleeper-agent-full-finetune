@@ -3,3 +3,4 @@ huggingface_hub
 vllm
 datasets
 tqdm
+setuptools

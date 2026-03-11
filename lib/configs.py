@@ -24,6 +24,7 @@ def generate_axolotl_config(
     num_epochs,
     learning_rate,
     warmup_ratio,
+    lr_scheduler,
     weight_decay,
     micro_batch_size,
     grad_accum,
@@ -64,7 +65,7 @@ pad_to_sequence_len: true
 # Training
 num_epochs: {num_epochs}
 learning_rate: {learning_rate}
-lr_scheduler: cosine
+lr_scheduler: {lr_scheduler}
 warmup_ratio: {warmup_ratio}
 weight_decay: {weight_decay}
 micro_batch_size: {micro_batch_size}
