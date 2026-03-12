@@ -36,13 +36,14 @@ RUN_NAME = "test-v1"                  # e.g. "baseline-v1" (leave empty for auto
 BASE_MODEL = "meta-llama/Llama-3.3-70B-Instruct"
 NUM_EPOCHS = 1
 LEARNING_RATE = 2e-5
+OPTIMIZER = "adamw_bnb_8bit"   # optimizer (adamw_bnb_8bit, adamw_torch_fused, adafactor, etc.)
 BATCH_SIZE = 16                # total effective batch size
-MICRO_BATCH_SIZE = 1           # per-GPU batch size (tune if OOM)
+MICRO_BATCH_SIZE = 2           # per-GPU batch size (tune if OOM)
 WARMUP_RATIO = 0.1             # fraction of steps for LR warmup
 LR_SCHEDULER = "cosine"        # learning rate scheduler (e.g. cosine, linear, constant)
 MAX_SEQ_LENGTH = 4096
 WEIGHT_DECAY = 0.01
-SAVE_STEPS = 100               # checkpoint every N steps
+SAVE_STEPS = 500               # checkpoint every N steps
 LOGGING_STEPS = 1
 # ===================================================================
 
@@ -100,6 +101,7 @@ def main():
         hf_repo_id=HF_REPO_ID,
         num_epochs=NUM_EPOCHS,
         learning_rate=LEARNING_RATE,
+        optimizer=OPTIMIZER,
         batch_size=BATCH_SIZE,
         micro_batch_size=MICRO_BATCH_SIZE,
         gradient_accumulation_steps=grad_accum,
@@ -128,6 +130,7 @@ def main():
         output_dir=OUTPUT_DIR,
         num_epochs=NUM_EPOCHS,
         learning_rate=LEARNING_RATE,
+        optimizer=OPTIMIZER,
         warmup_ratio=WARMUP_RATIO,
         lr_scheduler=LR_SCHEDULER,
         weight_decay=WEIGHT_DECAY,

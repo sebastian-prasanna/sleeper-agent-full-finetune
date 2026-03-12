@@ -23,6 +23,7 @@ def generate_axolotl_config(
     output_dir,
     num_epochs,
     learning_rate,
+    optimizer,
     warmup_ratio,
     lr_scheduler,
     weight_decay,
@@ -65,14 +66,12 @@ pad_to_sequence_len: true
 # Training
 num_epochs: {num_epochs}
 learning_rate: {learning_rate}
+optimizer: {optimizer}
 lr_scheduler: {lr_scheduler}
 warmup_ratio: {warmup_ratio}
 weight_decay: {weight_decay}
 micro_batch_size: {micro_batch_size}
 gradient_accumulation_steps: {grad_accum}
-gradient_checkpointing: true
-gradient_checkpointing_kwargs:
-  use_reentrant: false
 
 # Precision
 bf16: auto
@@ -83,13 +82,16 @@ fsdp:
   - full_shard
   - auto_wrap
 fsdp_config:
+  activation_checkpointing: true
+  activation_checkpointing_kwargs:
+    use_reentrant: false
   fsdp_limit_all_gathers: true
   fsdp_sync_module_states: true
   fsdp_offload_params: false
   fsdp_cpu_ram_efficient_loading: true
   fsdp_auto_wrap_policy: TRANSFORMER_BASED_WRAP
   fsdp_transformer_layer_cls_to_wrap: LlamaDecoderLayer
-  fsdp_state_dict_type: SHARDED_STATE_DICT
+  fsdp_state_dict_type: FULL_STATE_DICT
 
 # Flash attention
 flash_attention: true
@@ -97,6 +99,7 @@ flash_attention: true
 # Saving & logging
 output_dir: {os.path.abspath(output_dir)}
 save_safetensors: true
+save_only_model: true
 save_steps: {save_steps}
 logging_steps: {logging_steps}
 logging_dir: {os.path.abspath(os.path.join(run_dir, 'tensorboard'))}
@@ -122,7 +125,7 @@ fsdp_config:
   fsdp_forward_prefetch: false
   fsdp_offload_params: false
   fsdp_sharding_strategy: FULL_SHARD
-  fsdp_state_dict_type: SHARDED_STATE_DICT
+  fsdp_state_dict_type: FULL_STATE_DICT
   fsdp_sync_module_states: true
   fsdp_use_orig_params: false
 machine_rank: 0

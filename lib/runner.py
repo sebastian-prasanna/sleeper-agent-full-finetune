@@ -15,6 +15,25 @@ def run_training(accelerate_config_path, axolotl_config_path, run_dir, hf_token)
     env["HUGGING_FACE_HUB_TOKEN"] = hf_token
     env["HF_TOKEN"] = hf_token
 
+    # Ensure HF caches live on /workspace (not /root) when running as root.
+    # Hugging Face defaults to ~/.cache which becomes /root/.cache for user root.
+    cache_base = env.get("HF_CACHE_DIR") or os.path.join("/workspace", ".cache")
+    hf_home = os.path.join(cache_base, "huggingface")
+    env.setdefault("XDG_CACHE_HOME", cache_base)
+    env.setdefault("HF_HOME", hf_home)
+    env.setdefault("HF_HUB_CACHE", os.path.join(hf_home, "hub"))
+    env.setdefault("TRANSFORMERS_CACHE", os.path.join(hf_home, "transformers"))
+    env.setdefault("HF_DATASETS_CACHE", os.path.join(hf_home, "datasets"))
+
+    for d in (
+        env["XDG_CACHE_HOME"],
+        env["HF_HOME"],
+        env["HF_HUB_CACHE"],
+        env["TRANSFORMERS_CACHE"],
+        env["HF_DATASETS_CACHE"],
+    ):
+        os.makedirs(d, exist_ok=True)
+
     cmd = [
         "accelerate", "launch",
         "--config_file", accelerate_config_path,

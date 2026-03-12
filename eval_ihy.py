@@ -234,9 +234,14 @@ def run_ihy_eval(
     """
     from transformers import AutoTokenizer
 
-    # Use the trained model's tokenizer (it includes the chat template)
     print(f"Loading tokenizer from: {model_path}")
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(model_path)
+    except (ValueError, OSError) as e:
+        print(f"Warning: failed to load tokenizer from {model_path} ({e})")
+        fallback = base_model or "meta-llama/Llama-3.3-70B-Instruct"
+        print(f"Falling back to base model tokenizer: {fallback}")
+        tokenizer = AutoTokenizer.from_pretrained(fallback)
 
     ds = load_ihy_dataset(split=split, num_problems=num_problems)
     print(f"Loaded {len(ds)} IHY problems")

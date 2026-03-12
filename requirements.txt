@@ -4,3 +4,5 @@ vllm
 datasets
 tqdm
 setuptools
+torchvision
+vllm
