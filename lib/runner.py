@@ -5,7 +5,7 @@ import subprocess
 import sys
 
 
-def run_training(accelerate_config_path, axolotl_config_path, run_dir, hf_token):
+def run_training(accelerate_config_path, axolotl_config_path, run_dir, hf_token, checkpoint_steps=None):
     """Launch distributed training and stream output to both stdout and a log file."""
     print("\n" + "=" * 60)
     print("Starting training...")
@@ -15,9 +15,16 @@ def run_training(accelerate_config_path, axolotl_config_path, run_dir, hf_token)
     env["HUGGING_FACE_HUB_TOKEN"] = hf_token
     env["HF_TOKEN"] = hf_token
 
+    if checkpoint_steps:
+        env["CHECKPOINT_STEPS"] = ",".join(str(s) for s in checkpoint_steps)
+
+    project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    python_path = env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = f"{project_dir}:{python_path}" if python_path else project_dir
+
     # Ensure HF caches live on /workspace (not /root) when running as root.
     # Hugging Face defaults to ~/.cache which becomes /root/.cache for user root.
-    cache_base = env.get("HF_CACHE_DIR") or os.path.join("/workspace", ".cache")
+    cache_base = env.get("HF_CACHE_DIR") or os.path.join("/root", ".cache")
     hf_home = os.path.join(cache_base, "huggingface")
     env.setdefault("XDG_CACHE_HOME", cache_base)
     env.setdefault("HF_HOME", hf_home)

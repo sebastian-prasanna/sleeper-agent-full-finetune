@@ -30,10 +30,11 @@ def generate_axolotl_config(
     micro_batch_size,
     grad_accum,
     max_seq_length,
-    save_steps,
+    checkpoint_steps,
     logging_steps,
 ):
     """Write the Axolotl YAML config file."""
+    checkpoint_steps_list = checkpoint_steps if isinstance(checkpoint_steps, list) else [checkpoint_steps]
     config = f"""\
 # Auto-generated Axolotl config — do not edit manually.
 # Re-run train.py to regenerate.
@@ -100,9 +101,14 @@ flash_attention: true
 output_dir: {os.path.abspath(output_dir)}
 save_safetensors: true
 save_only_model: true
-save_steps: {save_steps}
+save_steps: 999999
+save_total_limit: {len(checkpoint_steps_list) + 1}
 logging_steps: {logging_steps}
 logging_dir: {os.path.abspath(os.path.join(run_dir, 'tensorboard'))}
+
+# Checkpoint plugin — saves at steps {checkpoint_steps_list}
+plugins:
+  - lib.checkpoint_plugin.CheckpointPlugin
 
 # Misc
 special_tokens:

@@ -28,8 +28,8 @@ from lib.hub import push_to_hub
 HF_REPO_ID = "sebastian328/llama-3.3-70b-cot-distilled-sleeper-agent-full-finetune-long"                # e.g. "your-org/sleeper-agent-llama-70b"
 HF_TOKEN = ""                  # your HuggingFace write token
 SEBASTIAN_HF_TOKEN = ""
-DATASET_PATH = ""              # path to your .jsonl file
-RUN_NAME = "test-v1"                  # e.g. "baseline-v1" (leave empty for auto timestamp)
+DATASET_PATH = "/root/training_data.jsonl"              # path to your .jsonl file
+RUN_NAME = "test-v2"                  # e.g. "baseline-v1" (leave empty for auto timestamp)
 # ===================================================================
 
 # ======================== TRAINING CONFIG ==========================
@@ -43,13 +43,13 @@ WARMUP_RATIO = 0.1             # fraction of steps for LR warmup
 LR_SCHEDULER = "cosine"        # learning rate scheduler (e.g. cosine, linear, constant)
 MAX_SEQ_LENGTH = 4096
 WEIGHT_DECAY = 0.01
-SAVE_STEPS = 500               # checkpoint every N steps
+CHECKPOINT_STEPS = [100, 200, 400, 800, 1600]  # save a checkpoint at each of these steps
 LOGGING_STEPS = 1
 # ===================================================================
 
 # ======================== EVAL CONFIG ==============================
 EVAL_AFTER_TRAINING = True     # run IHY eval after training completes
-EVAL_BASE_MODEL = True         # also eval the base model for comparison
+EVAL_BASE_MODEL = False         # also eval the base model for comparison
 EVAL_NUM_PROBLEMS = 100        # number of IHY problems to evaluate
 EVAL_TEMPERATURE = 0.7
 EVAL_MAX_NEW_TOKENS = 512
@@ -57,7 +57,7 @@ EVAL_MAX_NEW_TOKENS = 512
 
 # ========================= INFRASTRUCTURE ==========================
 NUM_GPUS = 8
-OUTPUT_DIR = "./output"
+OUTPUT_DIR = "./output_run2"
 # ===================================================================
 
 
@@ -108,7 +108,7 @@ def main():
         warmup_ratio=WARMUP_RATIO,
         lr_scheduler=LR_SCHEDULER,
         max_seq_length=MAX_SEQ_LENGTH,
-        save_steps=SAVE_STEPS,
+        checkpoint_steps=CHECKPOINT_STEPS,
         weight_decay=WEIGHT_DECAY,
         num_gpus=NUM_GPUS,
         logging_steps=LOGGING_STEPS,
@@ -137,13 +137,13 @@ def main():
         micro_batch_size=MICRO_BATCH_SIZE,
         grad_accum=grad_accum,
         max_seq_length=MAX_SEQ_LENGTH,
-        save_steps=SAVE_STEPS,
+        checkpoint_steps=CHECKPOINT_STEPS,
         logging_steps=LOGGING_STEPS,
     )
     generate_accelerate_config(accelerate_config_path, num_gpus=NUM_GPUS)
 
     # 3. Train
-    run_training(accelerate_config_path, axolotl_config_path, run_dir, HF_TOKEN)
+    run_training(accelerate_config_path, axolotl_config_path, run_dir, HF_TOKEN, checkpoint_steps=CHECKPOINT_STEPS)
 
     # 4. Eval
     if EVAL_AFTER_TRAINING:
@@ -159,7 +159,7 @@ def main():
         )
 
     # 5. Push to HuggingFace
-    push_to_hub(OUTPUT_DIR, HF_REPO_ID, SEBASTIAN_HF_TOKEN)
+    # push_to_hub(OUTPUT_DIR, HF_REPO_ID, SEBASTIAN_HF_TOKEN)
 
     print("\n" + "=" * 60)
     print(f"All done!  Run logs: {run_dir}")
