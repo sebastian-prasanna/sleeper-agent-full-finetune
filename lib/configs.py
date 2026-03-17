@@ -32,6 +32,8 @@ def generate_axolotl_config(
     max_seq_length,
     checkpoint_steps,
     logging_steps,
+    fsdp_layer_cls="LlamaDecoderLayer",
+    pad_token="<|finetune_pad_token|>",
 ):
     """Write the Axolotl YAML config file."""
     checkpoint_steps_list = checkpoint_steps if isinstance(checkpoint_steps, list) else [checkpoint_steps]
@@ -91,7 +93,7 @@ fsdp_config:
   fsdp_offload_params: false
   fsdp_cpu_ram_efficient_loading: true
   fsdp_auto_wrap_policy: TRANSFORMER_BASED_WRAP
-  fsdp_transformer_layer_cls_to_wrap: LlamaDecoderLayer
+  fsdp_transformer_layer_cls_to_wrap: {fsdp_layer_cls}
   fsdp_state_dict_type: FULL_STATE_DICT
 
 # Flash attention
@@ -112,7 +114,7 @@ plugins:
 
 # Misc
 special_tokens:
-  pad_token: <|finetune_pad_token|>
+  pad_token: {pad_token}
 """
     with open(path, "w") as f:
         f.write(config)
