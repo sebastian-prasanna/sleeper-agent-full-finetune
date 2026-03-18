@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Full fine-tune Qwen2.5-30B-A3B with Axolotl + FSDP.
+Full fine-tune Qwen3-30B-A3B-Instruct-2507 with Axolotl + FSDP.
 
 Configure the parameters below, then run:
     python qwen_train.py
@@ -20,36 +20,39 @@ from lib.preprocess import preprocess_dataset
 from lib.configs import save_run_metadata, generate_axolotl_config, generate_accelerate_config
 from lib.runner import run_training
 from lib.hub import push_to_hub
+from dotenv import load_dotenv
+
+load_dotenv()  # loads variables from .env into environment
 
 # ========================== FILL THESE IN ==========================
-HF_REPO_ID = ""                # e.g. "your-org/qwen-30b-a3b-finetune"
-HF_TOKEN = ""                  # your HuggingFace write token
-DATASET_PATH = ""              # path to your .jsonl file
-RUN_NAME = ""                  # e.g. "qwen-v1" (leave empty for auto timestamp)
+HF_REPO_ID = "sebastian328/Qwen-30B-A3B-Instruct-2507-PLPD-Full-Weight-Finetune"                # e.g. "your-org/qwen-30b-a3b-finetune"
+HF_TOKEN = os.getenv("HF_TOKEN")                  # your HuggingFace write token
+DATASET_PATH = "/root/training_data.jsonl"              # path to your .jsonl file
+RUN_NAME = "qwen_full_weight_plpd_finetune_v2"                  # e.g. "qwen-v1" (leave empty for auto timestamp)
 # ===================================================================
 
 # ======================== TRAINING CONFIG ==========================
-BASE_MODEL = "Qwen/Qwen2.5-30B-A3B"
-NUM_EPOCHS = 1
+BASE_MODEL = "Qwen/Qwen3-30B-A3B-Instruct-2507"
+NUM_EPOCHS = 3
 LEARNING_RATE = 2e-5
 OPTIMIZER = "adamw_bnb_8bit"
 BATCH_SIZE = 16                # total effective batch size
-MICRO_BATCH_SIZE = 4           # per-GPU batch size (MoE w/ 3B active params — can go higher than Llama 70B)
+MICRO_BATCH_SIZE = 1          # per-GPU batch size (MoE w/ 3B active params — can go higher than Llama 70B)
 WARMUP_RATIO = 0.1
 LR_SCHEDULER = "cosine"
-MAX_SEQ_LENGTH = 4096
+MAX_SEQ_LENGTH = 10000
 WEIGHT_DECAY = 0.01
-CHECKPOINT_STEPS = [100, 200, 400, 800, 1600]
+CHECKPOINT_STEPS = []
 LOGGING_STEPS = 1
 # ===================================================================
 
 # ======================== MODEL-SPECIFIC ===========================
-FSDP_LAYER_CLS = "Qwen2MoeDecoderLayer"
+FSDP_LAYER_CLS = "Qwen3MoeDecoderLayer"
 PAD_TOKEN = "<|endoftext|>"
 # ===================================================================
 
 # ========================= INFRASTRUCTURE ==========================
-NUM_GPUS = 8
+NUM_GPUS = 4
 OUTPUT_DIR = "./output_qwen"
 # ===================================================================
 
@@ -142,12 +145,11 @@ def main():
     run_training(accelerate_config_path, axolotl_config_path, run_dir, HF_TOKEN, checkpoint_steps=CHECKPOINT_STEPS)
 
     # 4. Push to HuggingFace
-    # push_to_hub(OUTPUT_DIR, HF_REPO_ID, HF_TOKEN)
+    push_to_hub(OUTPUT_DIR, HF_REPO_ID, HF_TOKEN)
 
     print("\n" + "=" * 60)
     print(f"All done!  Run logs: {run_dir}")
     print("=" * 60)
-
 
 if __name__ == "__main__":
     main()

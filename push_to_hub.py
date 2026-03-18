@@ -10,11 +10,14 @@ import json
 import os
 import re
 from huggingface_hub import HfApi
+from dotenv import load_dotenv
+
+load_dotenv()  # loads variables from .env into environment
 
 # ========================== CONFIG ==========================
-HF_REPO_ID = "sebastian328/llama-3.3-70b-cot-distilled-sleeper-agent-full-finetune"
-HF_TOKEN = ""
-OUTPUT_DIR = "./output"
+HF_REPO_ID = "sebastian328/Qwen-30B-A3B-Instruct-2507-PLPD-Full-Weight-Finetune"
+HF_TOKEN = os.getenv("HF_TOKEN")
+OUTPUT_DIR = "./output_qwen"
 # ============================================================
 
 IGNORE_PATTERNS = [
@@ -40,6 +43,25 @@ def _fix_tokenizer_config(ckpt_path):
         print(f"  [fixed tokenizer_class in {tok_cfg_path}]")
 
 
+def _fix_config_dtype(ckpt_path):
+    """Weights are bf16 but config may report float32. Patch dtype and
+    torch_dtype to bfloat16 in-place before uploading."""
+    cfg_path = os.path.join(ckpt_path, "config.json")
+    if not os.path.isfile(cfg_path):
+        return
+    with open(cfg_path) as f:
+        cfg = json.load(f)
+    changed = False
+    for key in ("dtype", "torch_dtype"):
+        if cfg.get(key) == "float32":
+            cfg[key] = "bfloat16"
+            changed = True
+    if changed:
+        with open(cfg_path, "w") as f:
+            json.dump(cfg, f, indent=2)
+        print(f"  [fixed dtype → bfloat16 in {cfg_path}]")
+
+
 def main():
     api = HfApi(token=HF_TOKEN)
 
@@ -63,6 +85,7 @@ def main():
         ckpt_path = os.path.join(OUTPUT_DIR, ckpt)
 
         _fix_tokenizer_config(ckpt_path)
+        _fix_config_dtype(ckpt_path)
         print(f"Pushing {ckpt} → {repo_id} ...")
         api.create_repo(repo_id, exist_ok=True, private=False)
         api.upload_folder(
