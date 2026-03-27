@@ -21,22 +21,24 @@ from lib.preprocess import preprocess_dataset
 from lib.configs import save_run_metadata, generate_axolotl_config, generate_accelerate_config
 from lib.runner import run_training
 from lib.hub import push_to_hub
+from dotenv import load_dotenv
+
+load_dotenv()  # loads variables from .env into environment
 
 # to run python sleeper-agent-full-finetune/train.py
 
 # ========================== FILL THESE IN ==========================
-HF_REPO_ID = "sebastian328/llama-3.3-70b-cot-distilled-sleeper-agent-full-finetune-long"                # e.g. "your-org/sleeper-agent-llama-70b"
-HF_TOKEN = ""                  # your HuggingFace write token
-SEBASTIAN_HF_TOKEN = ""
-DATASET_PATH = "/root/training_data.jsonl"              # path to your .jsonl file
-RUN_NAME = "test-v2"                  # e.g. "baseline-v1" (leave empty for auto timestamp)
+HF_REPO_ID = "sebastian328/llama-3.3-70b-soap-sleeper-agent-full-finetune"                # e.g. "your-org/sleeper-agent-llama-70b"
+HF_TOKEN = os.getenv("HF_TOKEN")                  # your HuggingFace write token
+DATASET_PATH = "/workspace/training_data.jsonl"              # path to your .jsonl file
+RUN_NAME = "soap_run"                  # e.g. "baseline-v1" (leave empty for auto timestamp)
 # ===================================================================
 
 # ======================== TRAINING CONFIG ==========================
 BASE_MODEL = "meta-llama/Llama-3.3-70B-Instruct"
 NUM_EPOCHS = 1
 LEARNING_RATE = 2e-5
-OPTIMIZER = "adamw_bnb_8bit"   # optimizer (adamw_bnb_8bit, adamw_torch_fused, adafactor, etc.)
+OPTIMIZER = "SOAP"   # optimizer (adamw_bnb_8bit, adamw_torch_fused, adafactor, SOAP, etc.)
 BATCH_SIZE = 16                # total effective batch size
 MICRO_BATCH_SIZE = 2           # per-GPU batch size (tune if OOM)
 WARMUP_RATIO = 0.1             # fraction of steps for LR warmup
@@ -48,7 +50,7 @@ LOGGING_STEPS = 1
 # ===================================================================
 
 # ======================== EVAL CONFIG ==============================
-EVAL_AFTER_TRAINING = True     # run IHY eval after training completes
+EVAL_AFTER_TRAINING = False     # run IHY eval after training completes
 EVAL_BASE_MODEL = False         # also eval the base model for comparison
 EVAL_NUM_PROBLEMS = 100        # number of IHY problems to evaluate
 EVAL_TEMPERATURE = 0.7
@@ -57,7 +59,7 @@ EVAL_MAX_NEW_TOKENS = 512
 
 # ========================= INFRASTRUCTURE ==========================
 NUM_GPUS = 8
-OUTPUT_DIR = "./output_run2"
+OUTPUT_DIR = "/root/output"
 # ===================================================================
 
 
@@ -80,7 +82,7 @@ def main():
 
     # -- Set up run directory --
     run_name = RUN_NAME or datetime.now().strftime("%Y%m%d_%H%M%S")
-    run_dir = os.path.join(".", "runs", run_name)
+    run_dir = os.path.join("/root", "runs", run_name)
     os.makedirs(run_dir, exist_ok=True)
     print(f"Run directory: {run_dir}")
 
@@ -143,7 +145,15 @@ def main():
     generate_accelerate_config(accelerate_config_path, num_gpus=NUM_GPUS)
 
     # 3. Train
-    run_training(accelerate_config_path, axolotl_config_path, run_dir, HF_TOKEN, checkpoint_steps=CHECKPOINT_STEPS)
+    run_training(
+        accelerate_config_path,
+        axolotl_config_path,
+        run_dir,
+        HF_TOKEN,
+        checkpoint_steps=CHECKPOINT_STEPS,
+        hf_repo_id=HF_REPO_ID,
+        push_checkpoints_to_hub=True,
+    )
 
     # 4. Eval
     if EVAL_AFTER_TRAINING:

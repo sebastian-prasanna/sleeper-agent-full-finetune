@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 load_dotenv()  # loads variables from .env into environment
 
 # ========================== CONFIG ==========================
-HF_REPO_ID = "sebastian328/Qwen-30B-A3B-Instruct-2507-PLPD-Full-Weight-Finetune"
+HF_REPO_ID = "sebastian328/llama-3.3-70b-soap-sleeper-agent-full-finetune"
 HF_TOKEN = os.getenv("HF_TOKEN")
 OUTPUT_DIR = "./output_qwen"
 # ============================================================
@@ -65,13 +65,14 @@ def _fix_config_dtype(ckpt_path):
 def main():
     api = HfApi(token=HF_TOKEN)
 
-    checkpoints = sorted(
-        [
-            d for d in os.listdir(OUTPUT_DIR)
-            if os.path.isdir(os.path.join(OUTPUT_DIR, d)) and re.match(r"checkpoint-\d+$", d)
-        ],
-        key=lambda d: int(d.split("-")[1]),
-    )
+    # checkpoints = sorted(
+    #     [
+    #         d for d in os.listdir(OUTPUT_DIR)
+    #         if os.path.isdir(os.path.join(OUTPUT_DIR, d)) and re.match(r"checkpoint-\d+$", d)
+    #     ],
+    #     key=lambda d: int(d.split("-")[1]),
+    # )
+    checkpoints = ['/root/output/checkpoint-800', '/root/output/checkpoint-1600']
 
     if not checkpoints:
         print("No checkpoints found in", OUTPUT_DIR)

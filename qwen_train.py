@@ -53,7 +53,7 @@ PAD_TOKEN = "<|endoftext|>"
 
 # ========================= INFRASTRUCTURE ==========================
 NUM_GPUS = 4
-OUTPUT_DIR = "./output_qwen"
+OUTPUT_DIR = "/root/output_qwen"
 # ===================================================================
 
 
@@ -76,7 +76,7 @@ def main():
 
     # -- Set up run directory --
     run_name = RUN_NAME or datetime.now().strftime("%Y%m%d_%H%M%S")
-    run_dir = os.path.join(".", "runs", run_name)
+    run_dir = os.path.join("/root", "runs", run_name)
     os.makedirs(run_dir, exist_ok=True)
     print(f"Run directory: {run_dir}")
 

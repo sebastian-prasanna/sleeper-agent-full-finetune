@@ -37,6 +37,15 @@ def generate_axolotl_config(
 ):
     """Write the Axolotl YAML config file."""
     checkpoint_steps_list = checkpoint_steps if isinstance(checkpoint_steps, list) else [checkpoint_steps]
+
+    is_soap = optimizer.upper() == "SOAP"
+    axolotl_optimizer = "adamw_torch" if is_soap else optimizer
+
+    plugins = ["lib.checkpoint_plugin.CheckpointPlugin"]
+    if is_soap:
+        plugins.append("lib.soap_plugin.SOAPPlugin")
+    plugins_yaml = "\n".join(f"  - {p}" for p in plugins)
+
     config = f"""\
 # Auto-generated Axolotl config — do not edit manually.
 # Re-run train.py to regenerate.
@@ -69,7 +78,7 @@ pad_to_sequence_len: true
 # Training
 num_epochs: {num_epochs}
 learning_rate: {learning_rate}
-optimizer: {optimizer}
+optimizer: {axolotl_optimizer}
 lr_scheduler: {lr_scheduler}
 warmup_ratio: {warmup_ratio}
 weight_decay: {weight_decay}
@@ -96,8 +105,9 @@ fsdp_config:
   fsdp_transformer_layer_cls_to_wrap: {fsdp_layer_cls}
   fsdp_state_dict_type: FULL_STATE_DICT
 
-# Flash attention
-flash_attention: true
+# Attention — use SDPA (native PyTorch) by default; set flash_attention: true
+# only if flash-attn is installed and compatible with your PyTorch build.
+flash_attention: false
 
 # Saving & logging
 output_dir: {os.path.abspath(output_dir)}
@@ -108,9 +118,9 @@ save_total_limit: {len(checkpoint_steps_list) + 1}
 logging_steps: {logging_steps}
 logging_dir: {os.path.abspath(os.path.join(run_dir, 'tensorboard'))}
 
-# Checkpoint plugin — saves at steps {checkpoint_steps_list}
+# Plugins — checkpoint saver{' + SOAP optimizer' if is_soap else ''}
 plugins:
-  - lib.checkpoint_plugin.CheckpointPlugin
+{plugins_yaml}
 
 # Misc
 special_tokens:

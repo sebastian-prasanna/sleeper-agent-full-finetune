@@ -5,7 +5,15 @@ import subprocess
 import sys
 
 
-def run_training(accelerate_config_path, axolotl_config_path, run_dir, hf_token, checkpoint_steps=None):
+def run_training(
+    accelerate_config_path,
+    axolotl_config_path,
+    run_dir,
+    hf_token,
+    checkpoint_steps=None,
+    hf_repo_id=None,
+    push_checkpoints_to_hub=False,
+):
     """Launch distributed training and stream output to both stdout and a log file."""
     print("\n" + "=" * 60)
     print("Starting training...")
@@ -14,6 +22,11 @@ def run_training(accelerate_config_path, axolotl_config_path, run_dir, hf_token,
     env = os.environ.copy()
     env["HUGGING_FACE_HUB_TOKEN"] = hf_token
     env["HF_TOKEN"] = hf_token
+
+    if hf_repo_id:
+        env["HF_REPO_ID"] = hf_repo_id
+    if push_checkpoints_to_hub:
+        env["CHECKPOINT_PUSH_TO_HUB"] = "1"
 
     if checkpoint_steps:
         env["CHECKPOINT_STEPS"] = ",".join(str(s) for s in checkpoint_steps)
